@@ -1,0 +1,13 @@
+{
+  "name": "T. Avineshwar \u2014 Data Analyst",
+  "short_name": "Avineshwar",
+  "description": "Data Analyst portfolio \u2014 dashboards, SQL, and modern data analysis. Power BI, Excel, Power Query, DAX, SQL.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF9F6",
+  "theme_color": "#FAF9F6",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "images/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

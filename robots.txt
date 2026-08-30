@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://avineshwar-t.github.io/avi-Portfolio/sitemap.xml
