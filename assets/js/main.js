@@ -1,8 +1,10 @@
 /* ============================================================
    T. AVINESHWAR — DATA ANALYST PORTFOLIO ENGINE
-   Light theme · Intro sequence (every visit, skippable)
+   Light/Dark theme · Intro sequence (every visit, skippable)
    PDF / image lightbox · Workflow tracking
-   GSAP scroll reveals · Mobile nav
+   GSAP scroll reveals · Mobile nav · Role switcher
+   Stats counters · Custom cursor · Project filters
+   Parallax photo · Card tilt · Scroll progress
    ============================================================ */
 (function () {
   'use strict';
@@ -15,12 +17,9 @@ const $$ = (sel, ctx) => Array.from((ctx || document).querySelectorAll(sel));
 
 /* ============ INTRO STORAGE ============ */
 const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isCoarse  = window.matchMedia('(pointer: coarse)').matches;
 
 /* ============ PDF.JS (MOBILE TOUCH PREVIEWS) ============ */
-/* On touch/narrow devices the native iframe PDF viewer can't be scrolled
-   reliably with touch (and iOS Safari doesn't render PDFs in iframes at all).
-   So we render the PDF with PDF.js into a plain vertically-scrolling box.
-   Desktop keeps the interactive native iframe preview. */
 const usePdfJsUI = () =>
   window.matchMedia('(hover: none), (pointer: coarse)').matches ||
   window.innerWidth <= 768;
@@ -50,9 +49,6 @@ function pdfPageToCanvas(container, page, dpr, cssWidth) {
 
 function renderPdfRange(src, container, maxPages, onDone) {
   const done = typeof onDone === 'function' ? onDone : function () {};
-  /* Render token: if a newer render starts while this one is still awaiting
-     pages, this (stale) render stops appending so boxes never end up with
-     duplicated PDF pages. */
   const token = (container._renderToken || 0) + 1;
   container._renderToken = token;
   const isCurrent = () => container._renderToken === token;
@@ -124,11 +120,6 @@ function initPdfPreviews() {
       if (r.top < window.innerHeight + 240 && r.bottom > -240) renderBox(o.box, o.src);
     });
   };
-  /* Scroll fallback for lazy-rendering: IntersectionObserver always fires on
-     gradual scroll, but instant jumps (anchor links / reduced-motion "auto"
-     scroll-behavior) can skip its crossing detection. This rAF-throttled
-     passive check guarantees previews still appear and stops doing any work
-     once every box has rendered. */
   let pendingLazy = false;
   const onScrollLazy = function () {
     const remaining = lazy.some(function (o) { return !o.box._rendered; });
@@ -154,8 +145,6 @@ function initPdfPreviews() {
     box._src = src;
     lazy.push({ box, src });
 
-    /* Lazy-render pages the first time the card enters the viewport so we
-       never rasterize heavy canvases for cards the user hasn't reached yet. */
     if (typeof IntersectionObserver !== 'undefined') {
       const io = new IntersectionObserver(function (entries) {
         entries.forEach(function (en) {
@@ -170,9 +159,6 @@ function initPdfPreviews() {
       renderBox(box, src);
     }
 
-    /* Re-render pages at the correct size whenever the card width changes
-       (rotation / resize / font-load) so the preview always fills the card.
-       The render token discards any in-flight stale pass, so no duplicates. */
     if (typeof ResizeObserver !== 'undefined') {
       const ro = new ResizeObserver(function (entries) {
         if (!box._rendered) return;
@@ -216,26 +202,22 @@ function runIntro() {
     document.removeEventListener('touchstart', onSkip);
     document.removeEventListener('keydown', onSkip);
   }
-  /* Function declaration: hoisted, so finishIntro->detachSkipHandlers can
-     reference it even on the reduced-motion path where the intro is skipped
-     before the listeners are ever attached. */
   function onSkip() { skipIntro(); }
   function finishIntro() {
     if (introDone) return;
     introDone = true;
     intro.classList.add('is-hidden', 'is-completed');
     intro.setAttribute('aria-hidden', 'true');
+    intro.style.display = 'none';
     document.body.style.overflow = '';
+    document.querySelector('.nav').style.visibility = 'visible';
+    document.querySelector('.nav').style.opacity = '1';
     revealHero();
     detachSkipHandlers();
   }
   function skipIntro() { finishIntro(); }
 
-  /* Reduced motion: show the site immediately, no animation */
-  if (isReduced) {
-    finishIntro();
-    return;
-  }
+  if (isReduced) { finishIntro(); return; }
 
   const introHelloEl  = $('#introHello');
   const introNameEl   = $('#introName');
@@ -243,32 +225,19 @@ function runIntro() {
   const introTaglineEl= $('#introTagline');
   const introLineEl   = $('#introLine');
 
-  if (!introHelloEl || !introNameEl || !introRoleEl) {
-    finishIntro();
-    return;
-  }
+  if (!introHelloEl || !introNameEl || !introRoleEl) { finishIntro(); return; }
 
   const ease = 'cubic-bezier(0.22, 1, 0.36, 1)';
   const dur  = 0.55;
-
-  /* Slightly slower pacing on small screens so the reveal feels deliberate */
   const pace = window.innerWidth <= 768 ? 1.2 : 1;
 
-  /* Background grid + orbs gently fade in */
   const grid = intro.querySelector('.intro-grid');
-  if (grid) {
-    grid.style.opacity = '1';
-    grid.style.transition = 'opacity 1.1s ease';
-  }
+  if (grid) { grid.style.opacity = '1'; grid.style.transition = 'opacity 1.1s ease'; }
   const orbs = intro.querySelector('.intro-orbs');
-  if (orbs) {
-    orbs.style.opacity = '1';
-    orbs.style.transition = 'opacity 1.3s ease';
-  }
+  if (orbs) { orbs.style.opacity = '1'; orbs.style.transition = 'opacity 1.3s ease'; }
 
-  document.body.style.overflow = 'hidden'; /* lock scroll during intro */
+  document.body.style.overflow = 'hidden';
 
-  /* Split a line into word-by-word spans, revealed one after another */
   function splitWords(el, delayBase, step, cls) {
     if (!el) return;
     const words = el.textContent.trim().split(/\s+/);
@@ -281,11 +250,10 @@ function runIntro() {
       el.appendChild(s);
       if (i < words.length - 1) el.appendChild(document.createTextNode('\u00A0'));
     });
-    void el.offsetWidth; /* reflow so the reveal transition runs */
+    void el.offsetWidth;
     el.classList.add('iv-in');
   }
 
-  /* Split a line into letter-by-letter spans, black text */
   function splitLetters(el, delayBase, step, cls) {
     if (!el) return;
     const txt = el.textContent.trim();
@@ -301,7 +269,6 @@ function runIntro() {
     el.classList.add('iv-in');
   }
 
-  /* Soft fade for the closing tagline */
   function fadeIn(el, delay) {
     if (!el) return;
     setTimeout(() => {
@@ -311,7 +278,6 @@ function runIntro() {
     }, delay);
   }
 
-  /* 1) "HI, I'M" word-by-word → 2) AVINESHWAR letter-by-letter → 3) DATA ANALYST → 4) line + tagline */
   splitWords(introHelloEl, 150 * pace, 240 * pace, 'iv-word');
   splitLetters(introNameEl, 450 * pace, 70 * pace, 'iv-letter');
   splitLetters(introRoleEl, 1250 * pace, 85 * pace, 'iv-letter iv-letter-role');
@@ -322,14 +288,169 @@ function runIntro() {
     }, 2000 * pace);
   }
   fadeIn(introTaglineEl, 2320 * pace);
-
-  /* Hand over to the hero */
   setTimeout(finishIntro, 3300 * pace);
 
-  /* Skippable: tap / click / any key finishes the intro early */
   document.addEventListener('click', onSkip, { once: true });
   document.addEventListener('touchstart', onSkip, { once: true, passive: true });
   document.addEventListener('keydown', onSkip, { once: true });
+}
+
+/* ============ DARK MODE ============ */
+function initDarkMode() {
+  const toggle = $('#themeToggle');
+  if (!toggle) return;
+  const stored = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (stored === 'dark' || (!stored && prefersDark)) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    toggle.setAttribute('aria-pressed', 'true');
+  }
+  toggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+      toggle.setAttribute('aria-pressed', 'false');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+      toggle.setAttribute('aria-pressed', 'true');
+    }
+  });
+}
+
+/* ============ SCROLL PROGRESS BAR ============ */
+function initScrollProgress() {
+  const bar = $('#scrollProgressBar');
+  if (!bar) return;
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    const p = h > 0 ? (window.scrollY / h) * 100 : 0;
+    bar.style.width = p + '%';
+  }, { passive: true });
+}
+
+/* ============ ROLE SWITCHER ============ */
+function initRoleSwitcher() {
+  const el = $('#roleSwitcher');
+  if (!el) return;
+  const items = $$('.hr-item', el);
+  if (items.length < 2) return;
+  let idx = 0;
+  setInterval(() => {
+    const curr = items[idx];
+    idx = (idx + 1) % items.length;
+    const next = items[idx];
+    curr.classList.add('exit');
+    curr.classList.remove('active');
+    next.classList.add('active');
+    setTimeout(() => curr.classList.remove('exit'), 500);
+  }, 2800);
+}
+
+/* ============ STATS COUNTER ============ */
+function initStatsCounter() {
+  const cards = $$('.stat-num[data-count]');
+  if (!cards.length) return;
+  let animated = false;
+  function animate() {
+    if (animated) return;
+    animated = true;
+    cards.forEach(card => {
+      const target = parseInt(card.getAttribute('data-count'), 10);
+      const dur = 2000;
+      const start = performance.now();
+      function tick(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / dur, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        card.textContent = Math.floor(eased * target).toLocaleString();
+        if (progress < 1) requestAnimationFrame(tick);
+        else card.textContent = target.toLocaleString();
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+  if (typeof IntersectionObserver !== 'undefined') {
+    const statsSection = $('#stats');
+    if (statsSection) {
+      const io = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) { animate(); io.disconnect(); }
+      }, { threshold: 0.3 });
+      io.observe(statsSection);
+    }
+  } else {
+    animate();
+  }
+}
+
+/* ============ CUSTOM CURSOR ============ */
+function initCustomCursor() {
+  if (isCoarse) return;
+  const dot = $('#cursorDot');
+  const ring = $('#cursorRing');
+  if (!dot || !ring) return;
+  let mx = 0, my = 0, dx = 0, dy = 0;
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    dot.style.transform = `translate(${mx - 3}px, ${my - 3}px)`;
+  });
+  function animateRing() {
+    dx += (mx - dx) * 0.15;
+    dy += (my - dy) * 0.15;
+    ring.style.transform = `translate(${dx - 18}px, ${dy - 18}px)`;
+    requestAnimationFrame(animateRing);
+  }
+  animateRing();
+  const interactives = 'a, button, [data-open], .tool-card, .skill-card, .contact-card, .pf-btn, .cert-card';
+  document.addEventListener('mouseover', e => {
+    if (e.target.closest(interactives)) {
+      dot.classList.add('hovering');
+      ring.classList.add('hovering');
+    }
+  });
+  document.addEventListener('mouseout', e => {
+    if (e.target.closest(interactives)) {
+      dot.classList.remove('hovering');
+      ring.classList.remove('hovering');
+    }
+  });
+  document.addEventListener('mousedown', () => { dot.classList.add('clicking'); ring.classList.add('clicking'); });
+  document.addEventListener('mouseup', () => { dot.classList.remove('clicking'); ring.classList.remove('clicking'); });
+}
+
+/* ============ PROJECT FILTERS ============ */
+function initProjectFilters() {
+  const filterContainer = $('#projectFilters');
+  const projectsList = $('#projectsList');
+  if (!filterContainer || !projectsList) return;
+  const buttons = $$('.pf-btn', filterContainer);
+  const projects = $$('.project', projectsList);
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const filter = btn.getAttribute('data-filter');
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      projects.forEach(proj => {
+        const cats = (proj.getAttribute('data-category') || '').toLowerCase();
+        if (filter === 'all' || cats.includes(filter)) {
+          proj.classList.remove('hidden');
+          proj.style.opacity = '0';
+          proj.style.transform = 'translateY(15px)';
+          requestAnimationFrame(() => {
+            proj.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            proj.style.opacity = '1';
+            proj.style.transform = 'translateY(0)';
+          });
+        } else {
+          proj.style.transition = 'opacity 0.25s ease';
+          proj.style.opacity = '0';
+          setTimeout(() => proj.classList.add('hidden'), 250);
+        }
+      });
+    });
+  });
 }
 
 /* ============ SMOOTH ANCHOR SCROLL ============ */
@@ -404,7 +525,6 @@ function openLightbox(src, title) {
     lightboxImage.src = src;
     lightboxImage.style.display = 'block';
   } else if (usePdfJsUI() && pdfjsReady()) {
-    /* Mobile/touch: render the whole document as pages so it always opens */
     lightboxFrame.style.display = 'none';
     lightboxImage.style.display = 'none';
     const scroller = document.createElement('div');
@@ -485,8 +605,6 @@ function initReveals() {
 
   $$('[data-reveal="up"]').forEach(el => {
     if (el.closest('.hero') || el.closest('.intro')) return;
-    /* These have dedicated group animations below — animating them here too
-       would start two tweens on the same element (double transform/opacity). */
     if (el.matches('.tool-card, .skill-card, .contact-card, .project')) return;
     gsap.fromTo(el,
       { y: 25, autoAlpha: 0 },
@@ -563,6 +681,28 @@ function initReveals() {
       }
     );
   }
+
+  const statCards = $$('.stat-card');
+  if (statCards.length) {
+    gsap.fromTo(statCards,
+      { y: 20, autoAlpha: 0 },
+      {
+        y: 0, autoAlpha: 1, duration: 0.5, stagger: 0.1, ease: 'power3.out',
+        scrollTrigger: { trigger: '#stats', start: 'top 85%', once: true }
+      }
+    );
+  }
+
+  const testimonial = $('.testimonial-card');
+  if (testimonial) {
+    gsap.fromTo(testimonial,
+      { y: 25, autoAlpha: 0 },
+      {
+        y: 0, autoAlpha: 1, duration: 0.7, ease: 'power3.out',
+        scrollTrigger: { trigger: '#testimonial', start: 'top 80%', once: true }
+      }
+    );
+  }
 }
 
 /* ============ NAV SCROLL ============ */
@@ -617,6 +757,45 @@ function initWebCover() {
   });
 }
 
+/* ============ CURSOR GLOW ON TOOL CARDS ============ */
+function initCursorGlow() {
+  $$('.tool-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    });
+  });
+}
+
+/* ============ CARD TILT ============ */
+function initCardTilt() {
+  if (isCoarse) return;
+  $$('.tool-card, .skill-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+      card.style.transform = `perspective(800px) rotateY(${x * 6}deg) rotateX(${-y * 6}deg) translateY(-3px)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+  });
+}
+
+/* ============ PARALLAX PHOTO ============ */
+function initParallaxPhoto() {
+  if (isCoarse) return;
+  const photoFrame = $('#heroPhoto');
+  if (!photoFrame) return;
+  document.addEventListener('mousemove', e => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 12;
+    const y = (e.clientY / window.innerHeight - 0.5) * 12;
+    photoFrame.style.transform = `translate(${x}px, ${y}px)`;
+  });
+}
+
 /* ============ BOOT ============ */
 function boot() {
   runIntro();
@@ -625,6 +804,15 @@ function boot() {
   initWorkflow();
   initFooter();
   initWebCover();
+  initCursorGlow();
+  initDarkMode();
+  initScrollProgress();
+  initRoleSwitcher();
+  initStatsCounter();
+  initCustomCursor();
+  initProjectFilters();
+  initCardTilt();
+  initParallaxPhoto();
   onScroll();
 
   if (hasST) {
@@ -632,7 +820,7 @@ function boot() {
     setTimeout(() => ScrollTrigger.refresh(), 800);
   }
 
-  /* Failsafe: guarantee nothing is left hidden if a tween/trigger misbehaves */
+  /* Failsafe: guarantee nothing is left hidden */
   const forceRevealAll = function () {
     $$('[data-reveal]').forEach(el => {
       el.style.opacity = '1';

@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <meta name="description" content="Avineshwar — Data Analyst specializing in SQL, Power BI, Excel, Power Query and data visualization. Turning raw data into dashboards, business insights and decisions."/>
-  <meta name="keywords" content="Data Analyst, SQL, Power BI, Excel, Data Visualization, Business Intelligence, DAX, Data Analysis, Power Query, Dashboards"/>
+  <meta name="keywords" content="Data Analyst, SQL, Power BI, Excel, Data Visualization, Business Intelligence, DAX, Pandas, NumPy, Python, Data Analysis, Power Query, Dashboards"/>
   <meta name="author" content="T. Avineshwar"/>
   <meta name="theme-color" content="#FAF9F6"/>
   <meta name="robots" content="index, follow"/>
@@ -42,7 +42,7 @@
     "telephone": "+916383520070",
     "address": { "@type": "PostalAddress", "addressRegion": "Tamil Nadu", "addressCountry": "IN" },
     "sameAs": ["https://www.linkedin.com/in/t-avineshwar"],
-    "knowsAbout": ["SQL", "Power BI", "Excel", "Power Query", "DAX", "Dashboard Development", "Data Visualization"],
+    "knowsAbout": ["SQL", "Power BI", "Excel", "Power Query", "DAX", "Pandas", "NumPy", "Python", "Dashboard Development", "Data Visualization"],
     "alumniOf": [{ "@type": "EducationalOrganization", "name": "Park's College (Autonomous)" }]
   }
   </script>
@@ -50,6 +50,11 @@
 <body>
 
   <a href="#home" class="skip-link">Skip to content</a>
+
+  <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+  <div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
+
+  <div class="scroll-progress" id="scrollProgress" aria-hidden="true"><span class="scroll-progress-bar" id="scrollProgressBar"></span></div>
 
   <!-- ============ INTRO ANIMATION ============ -->
   <div class="intro" id="intro" aria-label="Intro sequence" aria-hidden="true">
@@ -79,6 +84,10 @@
         <li><a href="#contact" class="nav-link" data-nav>Contact</a></li>
         <li class="nav-item-cta"><a href="assets/files/resume.pdf" download class="nav-cta">Resume</a></li>
       </ul>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" aria-pressed="false">
+        <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
       <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">
         <span></span><span></span><span></span>
       </button>
@@ -91,18 +100,71 @@
       <div class="hero-copy">
         <p class="hero-eyebrow" data-hero="eyebrow">Data Analyst · Tamil Nadu, India</p>
         <h1 class="hero-name" data-hero="name">Avineshwar</h1>
+        <div class="hero-role-switcher" data-hero="role">
+          <span class="hero-role-static">I'm a </span>
+          <span class="hero-role-cycle" id="roleSwitcher">
+            <span class="hr-item active">Data Analyst</span>
+            <span class="hr-item">SQL Expert</span>
+            <span class="hr-item">Power BI Developer</span>
+            <span class="hr-item">Dashboard Builder</span>
+          </span>
+        </div>
         <p class="hero-statement" data-hero="statement">I turn raw data into insights, dashboards, and decisions that help businesses move faster.</p>
-        <div class="hero-actions" data-hero="actions">
+          <div class="hero-actions" data-hero="actions">
           <a href="#projects" class="btn btn-primary">View Projects</a>
           <a href="#contact" class="btn btn-outline">Get in touch</a>
+          <a href="assets/files/resume.pdf" target="_blank" rel="noopener" class="btn btn-outline">View Resume</a>
+        </div>
+        <div class="hero-socials" data-hero="social">
+          <a href="https://www.linkedin.com/in/t-avineshwar" target="_blank" rel="noopener" class="hero-social" aria-label="LinkedIn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+          </a>
+          <a href="mailto:avinesht43@gmail.com" class="hero-social" aria-label="Email">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/></svg>
+          </a>
+          <a href="assets/files/resume.pdf" download class="hero-social" aria-label="Download Resume">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </a>
         </div>
       </div>
       <div class="hero-photo-wrap" data-hero="photo">
-        <div class="hero-photo-frame">
+        <div class="hero-photo-frame" id="heroPhoto">
+          <div class="hero-photo-glow" aria-hidden="true"></div>
           <picture>
             <source srcset="assets/images/profile.webp" type="image/webp"/>
             <img src="assets/images/profile.png" alt="T. Avineshwar — Data Analyst" class="hero-photo" width="360" height="480" fetchpriority="high" decoding="async"/>
           </picture>
+        </div>
+        <div class="hero-scroll-hint" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATS ============ -->
+  <section class="section stats-section" id="stats">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-card" data-reveal="up">
+          <span class="stat-num" data-count="4">0</span>
+          <span class="stat-plus">+</span>
+          <span class="stat-label">Projects Delivered</span>
+        </div>
+        <div class="stat-card" data-reveal="up">
+          <span class="stat-num" data-count="23000">0</span>
+          <span class="stat-plus">+</span>
+          <span class="stat-label">Records Analyzed</span>
+        </div>
+        <div class="stat-card" data-reveal="up">
+          <span class="stat-num" data-count="7">0</span>
+          <span class="stat-plus">+</span>
+          <span class="stat-label">Tools Mastered</span>
+        </div>
+        <div class="stat-card" data-reveal="up">
+          <span class="stat-num" data-count="500">0</span>
+          <span class="stat-plus">+</span>
+          <span class="stat-label">SQL Queries Written</span>
         </div>
       </div>
     </div>
@@ -140,10 +202,18 @@
         <h2 class="section-title">Selected work.</h2>
       </div>
 
-      <div class="projects-list">
+      <div class="project-filters" data-reveal="up" id="projectFilters">
+        <button class="pf-btn active" data-filter="all">All</button>
+        <button class="pf-btn" data-filter="sql">SQL</button>
+        <button class="pf-btn" data-filter="powerbi">Power BI</button>
+        <button class="pf-btn" data-filter="python">Python</button>
+        <button class="pf-btn" data-filter="web">Web</button>
+      </div>
+
+      <div class="projects-list" id="projectsList">
 
         <!-- PROJECT 01 -->
-        <article class="project" data-reveal="up">
+        <article class="project" data-reveal="up" data-category="sql powerbi">
           <div class="project-head-row">
             <div class="project-header">
               <span class="project-num">01</span>
@@ -165,7 +235,6 @@
             </div>
             <div class="pdf-cover-actions">
               <span class="pdf-label">Excel · Power Query · Pivot Tables</span>
-              <button class="btn btn-sm" data-open="assets/files/ecommerce-dashboard.pdf" data-title="E-Commerce Analytics Dashboard">Open Report <span aria-hidden="true">↗</span></button>
             </div>
           </div>
 
@@ -182,7 +251,7 @@
         </article>
 
         <!-- PROJECT 02 -->
-        <article class="project" data-reveal="up">
+        <article class="project" data-reveal="up" data-category="powerbi">
           <div class="project-head-row">
             <div class="project-header">
               <span class="project-num">02</span>
@@ -204,7 +273,6 @@
             </div>
             <div class="pdf-cover-actions">
               <span class="pdf-label">Power BI · DAX · Data Modeling</span>
-              <button class="btn btn-sm" data-open="assets/files/icc-cricket-dashboard.pdf" data-title="ICC All Format Cricket Statistics">Open Report <span aria-hidden="true">↗</span></button>
             </div>
           </div>
 
@@ -221,7 +289,7 @@
         </article>
 
         <!-- PROJECT 03 -->
-        <article class="project" data-reveal="up">
+        <article class="project" data-reveal="up" data-category="web">
           <div class="project-head-row">
             <div class="project-header">
               <span class="project-num">03</span>
@@ -252,7 +320,7 @@
         </article>
 
 <!-- PROJECT 04 -->
-        <article class="project" data-reveal="up">
+        <article class="project" data-reveal="up" data-category="sql python">
           <div class="project-head-row">
             <div class="project-header">
               <span class="project-num">04</span>
@@ -274,7 +342,6 @@
             </div>
             <div class="pdf-cover-actions">
               <span class="pdf-label">MySQL · CTEs · Window Functions · Joins</span>
-              <button class="btn btn-sm" data-open="assets/files/blinkit-sql-analysis.pdf" data-title="Blinkit SQL Project Presentation">Open Presentation <span aria-hidden="true">↗</span></button>
             </div>
           </div>
 
@@ -338,6 +405,14 @@
             <span class="skill-tag">KPI Reports</span><span class="skill-tag">Storytelling</span>
           </div>
         </div>
+        <div class="skill-card" data-reveal="up">
+          <h3>Python (Pandas &amp; NumPy)</h3>
+          <div class="skill-card-body">
+            <span class="skill-tag">Data Wrangling</span><span class="skill-tag">DataFrames</span>
+            <span class="skill-tag">NumPy Arrays</span><span class="skill-tag">ETL Pipelines</span>
+            <span class="skill-tag">Statistical Analysis</span><span class="skill-tag">Data Cleaning</span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -385,6 +460,20 @@
           </div>
           <h3>DAX</h3>
           <p>Measures, calculated columns and analytical calculations.</p>
+        </div>
+        <div class="tool-card" data-reveal="up">
+          <div class="tool-icon-tile tile-pandas">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>
+          </div>
+          <h3>Pandas</h3>
+          <p>Data manipulation, cleaning, transformation and analysis with Python.</p>
+        </div>
+        <div class="tool-card" data-reveal="up">
+          <div class="tool-icon-tile tile-numpy">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 4h4v16H4z"/><path d="M10 4h4l6 16h-4z"/><path d="M16 4h4v16h-4z"/></svg>
+          </div>
+          <h3>NumPy</h3>
+          <p>Numerical computing, arrays, matrices and mathematical operations.</p>
         </div>
       </div>
     </div>
@@ -517,6 +606,27 @@
   </section>
 
   <!-- ============ DATA ANALYTICS TRAINING ============ -->
+  <section class="section testimonial-section" id="testimonial">
+    <div class="container">
+      <div class="section-head" data-reveal="up">
+        <span class="section-label">Recognition</span>
+        <h2 class="section-title">What they said.</h2>
+      </div>
+      <div class="testimonial-card" data-reveal="up">
+        <svg class="testimonial-quote" width="36" height="36" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 0 1-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 0 1-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z"/></svg>
+        <blockquote class="testimonial-text">Avineshwar delivered professional-quality dashboard designs that exceeded our expectations. His ability to transform raw data into clear, actionable insights made a real impact on our reporting workflow.</blockquote>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">HB</div>
+          <div>
+            <strong class="testimonial-name">Mrs. Haritha Babu</strong>
+            <span class="testimonial-role">CEO, Decodet Technologies</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DATA ANALYTICS TRAINING ============ -->
   <section class="section training-section" id="training">
     <div class="container">
       <div class="section-head" data-reveal="up">
@@ -533,6 +643,10 @@
           <h3>Data Analytics Training</h3>
           <p class="training-org-name">Xplore IT Corp · Coimbatore</p>
         </div>
+        <span class="training-org-badge" aria-label="Certified Training">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Certified
+        </span>
       </div>
 
       <div class="training-tools-grid" data-reveal="up">
@@ -555,6 +669,14 @@
         <div class="training-tool">
           <span class="training-tool-icon tile-dax"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 3v5.5A2.5 2.5 0 0 1 5.5 11H4a1.5 1.5 0 0 0 0 3h1.5A2.5 2.5 0 0 1 8 16.5V21"/><path d="M12.5 8h8"/><path d="M12.5 16h8"/><path d="M20.5 4l-2.3 3.4h4.6z"/></svg></span>
           <span class="training-tool-name">DAX</span>
+        </div>
+        <div class="training-tool">
+          <span class="training-tool-icon tile-pandas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg></span>
+          <span class="training-tool-name">Pandas</span>
+        </div>
+        <div class="training-tool">
+          <span class="training-tool-icon tile-numpy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 4h4v16H4z"/><path d="M10 4h4l6 16h-4z"/><path d="M16 4h4v16h-4z"/></svg></span>
+          <span class="training-tool-name">NumPy</span>
         </div>
       </div>
 
