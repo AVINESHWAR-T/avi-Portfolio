@@ -1,0 +1,17 @@
+{
+  "name": "T. Avineshwar \u2014 Data Analyst",
+  "short_name": "Avineshwar",
+  "description": "Data Analyst portfolio \u2014 dashboards, SQL, and modern data analysis. Power BI, Excel, Power Query, DAX, SQL.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF9F6",
+  "theme_color": "#FAF9F6",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "images/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "images/favicon-32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "images/favicon-48.png", "sizes": "48x48", "type": "image/png" },
+    { "src": "images/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "images/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
