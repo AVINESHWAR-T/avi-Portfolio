@@ -1,10 +1,10 @@
-/* ============================================================
-   T. AVINESHWAR — DATA ANALYST PORTFOLIO ENGINE
-   Light/Dark theme · Intro sequence (every visit, skippable)
-   PDF / image lightbox · Workflow tracking
-   GSAP scroll reveals · Mobile nav · Role switcher
-   Stats counters · Custom cursor · Project filters
-   Parallax photo · Card tilt · Scroll progress
+﻿/* ============================================================
+   T. AVINESHWAR â€” DATA ANALYST PORTFOLIO ENGINE
+   Light/Dark theme Â· Intro sequence (every visit, skippable)
+   PDF / image lightbox Â· Workflow tracking
+   GSAP scroll reveals Â· Mobile nav Â· Role switcher
+   Stats counters Â· Custom cursor Â· Project filters
+   Parallax photo Â· Card tilt Â· Scroll progress
    ============================================================ */
 (function () {
   'use strict';
@@ -54,7 +54,7 @@ function renderPdfRange(src, container, maxPages, onDone) {
   const isCurrent = () => container._renderToken === token;
 
   if (!configurePdfWorker()) {
-    if (isCurrent()) container.innerHTML = '<p class="pdf-fallback">Preview unavailable — use "Open Report" to view the document.</p>';
+    if (isCurrent()) container.innerHTML = '<p class="pdf-fallback">Preview unavailable â€” use "Open Report" to view the document.</p>';
     if (isCurrent()) done();
     return;
   }
@@ -91,7 +91,7 @@ function renderPdfRange(src, container, maxPages, onDone) {
     .catch(function () {
       if (!isCurrent()) return;
       container.classList.remove('is-loading');
-      container.innerHTML = '<p class="pdf-fallback">Preview load failed — use "Open Report" to view the document.</p>';
+      container.innerHTML = '<p class="pdf-fallback">Preview load failed â€” use "Open Report" to view the document.</p>';
       done();
     });
 }
@@ -140,7 +140,7 @@ function initPdfPreviews() {
     iframe.setAttribute('data-pdfjs', '1');
     const box = document.createElement('div');
     box.className = 'pdf-cover-viewer-touch is-loading';
-    box.setAttribute('aria-label', 'PDF preview — first page shown. Use Open Report to view the full document.');
+    box.setAttribute('aria-label', 'PDF preview â€” first page shown. Use Open Report to view the full document.');
     viewer.replaceChild(box, iframe);
     box._src = src;
     lazy.push({ box, src });
@@ -488,23 +488,34 @@ function initProjectFilters() {
           proj.classList.add('hidden');
         }
       });
-      if (hasST) ScrollTrigger.refresh();
+      if (hasST) {
+        try { ScrollTrigger.refresh(); } catch (e) { /* hidden triggers can fail a refresh */ }
+      }
     });
   });
 }
 
 /* ============ SMOOTH ANCHOR SCROLL ============ */
+const canSmoothScroll = 'scrollBehavior' in document.documentElement.style;
 $$('a[href^="#"]').forEach(a => {
   a.addEventListener('click', e => {
     const id = a.getAttribute('href');
     if (id.length < 2) return;
     const target = $(id);
     if (!target) return;
-    if (a.closest('.nav-links')) closeMobileMenu();
     e.preventDefault();
-    const offset = window.innerWidth <= 768 ? -56 : -72;
-    const y = target.getBoundingClientRect().top + window.scrollY + offset;
-    window.scrollTo({ top: y, behavior: isReduced ? 'auto' : 'smooth' });
+    if (a.closest('.nav-links')) closeMobileMenu();
+    const scroll = () => {
+      const nav = $('.nav');
+      const navH = nav ? nav.getBoundingClientRect().height : 0;
+      const y = target.getBoundingClientRect().top + window.scrollY - navH - 14;
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({
+        top: Math.max(0, y),
+        behavior: reduce || !canSmoothScroll ? 'auto' : 'smooth'
+      });
+    };
+    requestAnimationFrame(() => requestAnimationFrame(scroll));
   });
 });
 
@@ -644,46 +655,62 @@ function initWorkflow() {
   const progress = $('#workflowProgress');
   const list = $('#workflowList');
   if (!progress || !list) return;
-  const steps = list.querySelectorAll('.wf-step');
+  const steps = Array.from(list.querySelectorAll('.wf-step'));
   if (!steps.length) return;
-  const section = progress.parentElement;
-  if (!section) return;
   const total = steps.length;
-  let sectionTop = 0;
-  let sectionH = 0;
-  const measure = () => {
-    const r = section.getBoundingClientRect();
-    sectionTop = r.top + (window.scrollY || 0);
-    sectionH = r.height;
-  };
-  measure();
-  window.addEventListener('resize', measure, { passive: true });
+  let listTop = 0;
+  let listH = 0;
+  let raf = 0;
 
-  window.addEventListener('scroll', () => {
-    const scrollTop = window.scrollY || window.pageYOffset;
-    const viewportH = window.innerHeight;
-    const top = sectionTop - viewportH * 0.45;
-    const bottom = sectionTop + sectionH - viewportH * 0.3;
-    let p = 0;
-    if (scrollTop >= top && scrollTop <= bottom) {
-      p = (scrollTop - top) / Math.max(1, bottom - top);
-    } else if (scrollTop > bottom) {
-      p = 1;
-    }
-    progress.style.width = (p * 100) + '%';
-    const active = Math.min(total - 1, Math.floor(p * total));
-    steps.forEach((s, i) => s.classList.toggle('is-active', i <= active));
-  }, { passive: true });
+  const measure = () => {
+    const r = list.getBoundingClientRect();
+    listTop = r.top + (window.scrollY || window.pageYOffset || 0);
+    listH = r.height;
+  };
+
+  const update = () => {
+    raf = 0;
+    const scrollTop = window.scrollY || window.pageYOffset || 0;
+    const vh = window.innerHeight;
+    const start = listTop - vh * 0.72;
+    const end = listTop + listH - vh * 0.38;
+    let p = (scrollTop - start) / Math.max(1, end - start);
+    p = Math.max(0, Math.min(1, p));
+    const pct = (p * 100).toFixed(1) + '%';
+    progress.style.setProperty('--wf-progress', pct);
+    progress.style.width = pct;
+    const active = p <= 0 ? -1 : Math.min(total - 1, Math.floor(p * total));
+    steps.forEach((step, i) => {
+      step.classList.toggle('is-active', i <= active);
+      step.classList.toggle('is-current', i === active && p > 0);
+    });
+    list.classList.toggle('is-complete', p >= 0.995);
+  };
+
+  const requestUpdate = () => {
+    if (!raf) raf = window.requestAnimationFrame(update);
+  };
+
+  measure();
+  update();
+  window.addEventListener('resize', () => { measure(); requestUpdate(); }, { passive: true });
+  window.addEventListener('scroll', requestUpdate, { passive: true });
+  window.addEventListener('load', () => { measure(); requestUpdate(); });
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => { measure(); requestUpdate(); });
+  }
 }
 
 /* ============ SCROLL REVEALS ============ */
 function initReveals() {
   if (!hasGsap || !hasST) return;
   const dur = isReduced ? 0.01 : 0.7;
+  const canAnimate = el => !!el && el.getClientRects().length > 0;
 
   $$('[data-reveal="up"]').forEach(el => {
     if (el.closest('.hero') || el.closest('.intro')) return;
     if (el.matches('.tool-card, .skill-card, .contact-card, .project')) return;
+    if (!canAnimate(el)) return;
     gsap.fromTo(el,
       { y: 25, autoAlpha: 0 },
       {
@@ -694,7 +721,7 @@ function initReveals() {
   });
 
   const skillCards = $$('.skill-card');
-  if (skillCards.length) {
+  if (skillCards.length && canAnimate($('#skills'))) {
     gsap.fromTo(skillCards,
       { y: 20, autoAlpha: 0 },
       {
@@ -705,7 +732,7 @@ function initReveals() {
   }
 
   const toolCards = $$('.tool-card');
-  if (toolCards.length) {
+  if (toolCards.length && canAnimate($('#tools'))) {
     gsap.fromTo(toolCards,
       { y: 22, autoAlpha: 0 },
       {
@@ -716,7 +743,7 @@ function initReveals() {
   }
 
   const trainingTools = $$('.training-tool');
-  if (trainingTools.length) {
+  if (trainingTools.length && canAnimate($('#training'))) {
     gsap.fromTo(trainingTools,
       { y: 18, autoAlpha: 0 },
       {
@@ -727,6 +754,7 @@ function initReveals() {
   }
 
   $$('.project').forEach(proj => {
+    if (!canAnimate(proj)) return;
     const headRow = proj.querySelector('.project-head-row');
     const desc   = proj.querySelector('.project-desc');
     const cover  = proj.querySelector('.project-cover') || proj.querySelector('.pdf-cover');
@@ -739,7 +767,7 @@ function initReveals() {
   });
 
   const tlItems = $$('.tl-item');
-  if (tlItems.length) {
+  if (tlItems.length && canAnimate($('.timeline'))) {
     gsap.fromTo(tlItems,
       { x: -20, autoAlpha: 0 },
       {
@@ -750,7 +778,7 @@ function initReveals() {
   }
 
   const contactCards = $$('.contact-card');
-  if (contactCards.length) {
+  if (contactCards.length && canAnimate($('#contact'))) {
     gsap.fromTo(contactCards,
       { y: 20, autoAlpha: 0 },
       {
@@ -761,7 +789,7 @@ function initReveals() {
   }
 
   const statCards = $$('.stat-card');
-  if (statCards.length) {
+  if (statCards.length && canAnimate($('#stats'))) {
     gsap.fromTo(statCards,
       { y: 20, autoAlpha: 0 },
       {
@@ -772,7 +800,7 @@ function initReveals() {
   }
 
   const testimonial = $('.testimonial-card');
-  if (testimonial) {
+  if (canAnimate(testimonial)) {
     gsap.fromTo(testimonial,
       { y: 25, autoAlpha: 0 },
       {
@@ -816,7 +844,7 @@ if (backToTop) {
 /* ============ FOOTER YEAR ============ */
 function initFooter() {
   const el = $('.footer-copy');
-  if (el) el.textContent = `© ${new Date().getFullYear()} T. Avineshwar`;
+  if (el) el.textContent = `Â© ${new Date().getFullYear()} T. Avineshwar`;
 }
 
 /* ============ WEB COVER SCALE/CROP ============ */
@@ -916,3 +944,4 @@ if (document.readyState === 'loading') {
   boot();
 }
 })();
+
